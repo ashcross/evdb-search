@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NZ EV Finder — Filter & Compare</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242835;
+    --border: #2e3345;
+    --text: #e4e6ef;
+    --text-dim: #8b8fa3;
+    --accent: #4f8cff;
+    --accent-hover: #6ba0ff;
+    --green: #34d399;
+    --red: #f87171;
+    --orange: #fbbf24;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .header h1 span { color: var(--accent); }
+  .header-stats {
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .header-stats strong { color: var(--accent); font-size: 15px; }
+
+  /* Layout */
+  .layout {
+    display: flex;
+    min-height: calc(100vh - 57px);
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 340px;
+    min-width: 340px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .filter-section {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .filter-header {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    background: var(--surface2);
+  }
+  .filter-header:hover { color: var(--text); }
+  .filter-header .chevron {
+    transition: transform 0.2s;
+    font-size: 10px;
+  }
+  .filter-header.collapsed .chevron { transform: rotate(-90deg); }
+  .filter-body {
+    padding: 10px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .filter-body.hidden { display: none; }
+
+  /* Range sliders */
+  .range-filter { display: flex; flex-direction: column; gap: 4px; }
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .range-labels .val { color: var(--accent); font-weight: 600; }
+  .range-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .range-inputs input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .range-inputs input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+
+  /* Checkboxes */
+  .checkbox-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .chip {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .toggle {
+    width: 36px;
+    height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle.active { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: left 0.2s;
+  }
+  .toggle.active::after { left: 18px; }
+
+  /* Sort */
+  .sort-select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* Search */
+  .search-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text-dim); }
+
+  /* Reset button */
+  .reset-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* Main content */
+  .main {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .ev-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .ev-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+  }
+  .ev-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .ev-card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: var(--surface2);
+  }
+  .ev-card-img.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 40px;
+  }
+
+  .ev-card-body {
+    padding: 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ev-card-title {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .ev-card-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .ev-card-price {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--green);
+  }
+
+  .ev-card-specs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .spec-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .spec-label { color: var(--text-dim); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .spec-value { font-weight: 600; font-size: 13px; }
+
+  .ev-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: auto;
+  }
+  .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-dim);
+    font-size: 16px;
+  }
+
+  /* Mobile */
+  .sidebar-toggle {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  @media (max-width: 900px) {
+    .sidebar {
+      position: fixed;
+      top: 57px;
+      left: 0;
+      bottom: 0;
+      z-index: 150;
+      transform: translateX(-100%);
+      transition: transform 0.3s;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-toggle { display: flex; align-items: center; justify-content: center; }
+    .ev-grid { grid-template-columns: 1fr; }
+    .main { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>NZ</span> EV Finder</h1>
+  <div class="header-stats">
+    <span>Showing <strong id="count">0</strong> of <strong id="total">0</strong> EVs</span>
+    <span>|</span>
+    <span>Data from <a href="https://evdb.nz/evs" target="_blank" style="color:var(--accent)">evdb.nz</a></span>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <!-- Search -->
+    <input type="text" class="search-input" id="search" placeholder="Search make, model, variant...">
+
+    <!-- Sort -->
+    <div class="filter-section">
+      <div class="filter-header">Sort by <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <select class="sort-select" id="sortBy">
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+          <option value="range-desc">Range: Highest first</option>
+          <option value="range-asc">Range: Lowest first</option>
+          <option value="power-desc">Power: Highest first</option>
+          <option value="speed-asc">0-100 km/h: Fastest first</option>
+          <option value="efficiency-asc">Efficiency: Best first</option>
+          <option value="dccharger-desc">DC Charging: Fastest first</option>
+          <option value="battery-desc">Battery: Largest first</option>
+          <option value="weight-asc">Weight: Lightest first</option>
+          <option value="price_per_km-asc">Price/km: Best value first</option>
+          <option value="boot-desc">Boot: Largest first</option>
+          <option value="name-asc">Name: A → Z</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Price -->
+    <div class="filter-section">
+      <div class="filter-header">Price (NZD) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="priceMinVal">$0</span></span><span>Max: <span class="val" id="priceMaxVal">$750k</span></span></div>
+          <div class="range-inputs">
+            <input type="range" id="priceMin" min="0" max="750000" step="5000" value="0">
+            <input type="range" id="priceMax" min="0" max="750000" step="5000" value="750000">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Range -->
+    <div class="filter-section">
+      <div class="filter-header">Range (km) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="rangeMinVal">0 km</span></span></div>
+          <input type="range" id="rangeMin" min="0" max="800" step="10" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Power -->
+    <div class="filter-section">
+      <div class="filter-header">Power (kW) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="powerMinVal">0 kW</span></span></div>
+          <input type="range" id="powerMin" min="0" max="800" step="10" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Battery -->
+    <div class="filter-section">
+      <div class="filter-header">Battery (kWh) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="batteryMinVal">0 kWh</span></span></div>
+          <input type="range" id="batteryMin" min="0" max="130" step="5" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- DC Charging -->
+    <div class="filter-section">
+      <div class="filter-header">DC Charging (kW) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="dcMinVal">0 kW</span></span></div>
+          <input type="range" id="dcMin" min="0" max="500" step="10" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- 0-100 Speed -->
+    <div class="filter-section">
+      <div class="filter-header">0-100 km/h (sec) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Max: <span class="val" id="speedMaxVal">20 s</span></span></div>
+          <input type="range" id="speedMax" min="2" max="20" step="0.5" value="20">
+        </div>
+      </div>
+    </div>
+
+    <!-- Efficiency -->
+    <div class="filter-section">
+      <div class="filter-header">Efficiency (Wh/km) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Max: <span class="val" id="effMaxVal">350 Wh/km</span></span></div>
+          <input type="range" id="effMax" min="100" max="350" step="5" value="350">
+        </div>
+      </div>
+    </div>
+
+    <!-- Boot / Cargo -->
+    <div class="filter-section">
+      <div class="filter-header">Boot Space (L) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="bootMinVal">0 L</span></span></div>
+          <input type="range" id="bootMin" min="0" max="1400" step="50" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Towing -->
+    <div class="filter-section">
+      <div class="filter-header">Towing — Braked (kg) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="towMinVal">0 kg</span></span></div>
+          <input type="range" id="towMin" min="0" max="3000" step="100" value="0">
+        </div>
+        <div class="toggle-row">
+          <span>Must have towing</span>
+          <div class="toggle" id="towRequired"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seats -->
+    <div class="filter-section">
+      <div class="filter-header">Seats <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="checkbox-grid" id="seatsFilter"></div>
+      </div>
+    </div>
+
+    <!-- Make -->
+    <div class="filter-section">
+      <div class="filter-header">Make <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="checkbox-grid" id="makeFilter"></div>
+      </div>
+    </div>
+
+    <!-- Body Style -->
+    <div class="filter-section">
+      <div class="filter-header">Body Style <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="checkbox-grid" id="shapeFilter"></div>
+      </div>
+    </div>
+
+    <!-- Drivetrain -->
+    <div class="filter-section">
+      <div class="filter-header">Drivetrain <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="checkbox-grid" id="driveFilter"></div>
+      </div>
+    </div>
+
+    <!-- Battery Chemistry -->
+    <div class="filter-section">
+      <div class="filter-header">Battery Chemistry <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="checkbox-grid" id="chemFilter"></div>
+      </div>
+    </div>
+
+    <!-- Year -->
+    <div class="filter-section">
+      <div class="filter-header">Year <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="checkbox-grid" id="yearFilter"></div>
+      </div>
+    </div>
+
+    <!-- V2L -->
+    <div class="filter-section">
+      <div class="filter-header">Features <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="toggle-row">
+          <span>V2L (Vehicle to Load)</span>
+          <div class="toggle" id="v2lRequired"></div>
+        </div>
+        <div class="toggle-row">
+          <span>Has frunk</span>
+          <div class="toggle" id="frunkRequired"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AC Charger -->
+    <div class="filter-section">
+      <div class="filter-header">AC Charger (kW) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="acMinVal">0 kW</span></span></div>
+          <input type="range" id="acMin" min="0" max="22" step="1" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Weight -->
+    <div class="filter-section">
+      <div class="filter-header">Weight (kg) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Max: <span class="val" id="weightMaxVal">3100 kg</span></span></div>
+          <input type="range" id="weightMax" min="1000" max="3100" step="50" value="3100">
+        </div>
+      </div>
+    </div>
+
+    <!-- Ground Clearance -->
+    <div class="filter-section">
+      <div class="filter-header">Ground Clearance (mm) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="groundMinVal">0 mm</span></span></div>
+          <input type="range" id="groundMin" min="0" max="260" step="10" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Length -->
+    <div class="filter-section">
+      <div class="filter-header">Length (mm) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Max: <span class="val" id="lengthMaxVal">6000 mm</span></span></div>
+          <input type="range" id="lengthMax" min="3000" max="6000" step="100" value="6000">
+        </div>
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="lengthMinVal">0 mm</span></span></div>
+          <input type="range" id="lengthMin" min="0" max="6000" step="100" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Width -->
+    <div class="filter-section">
+      <div class="filter-header">Width (mm) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Max: <span class="val" id="widthMaxVal">2200 mm</span></span></div>
+          <input type="range" id="widthMax" min="1600" max="2200" step="20" value="2200">
+        </div>
+      </div>
+    </div>
+
+    <!-- Height -->
+    <div class="filter-section">
+      <div class="filter-header">Height (mm) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Max: <span class="val" id="heightMaxVal">2600 mm</span></span></div>
+          <input type="range" id="heightMax" min="1300" max="2600" step="20" value="2600">
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Speed -->
+    <div class="filter-section">
+      <div class="filter-header">Top Speed (km/h) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="topspeedMinVal">0 km/h</span></span></div>
+          <input type="range" id="topspeedMin" min="0" max="300" step="10" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Torque -->
+    <div class="filter-section">
+      <div class="filter-header">Torque (Nm) <span class="chevron">▼</span></div>
+      <div class="filter-body">
+        <div class="range-filter">
+          <div class="range-labels"><span>Min: <span class="val" id="torqueMinVal">0 Nm</span></span></div>
+          <input type="range" id="torqueMin" min="0" max="1300" step="50" value="0">
+        </div>
+      </div>
+    </div>
+
+    <button class="reset-btn" id="resetBtn">Reset All Filters</button>
+  </aside>
+
+  <main class="main">
+    <div class="ev-grid" id="evGrid"></div>
+  </main>
+</div>
+
+<button class="sidebar-toggle" id="sidebarToggle">⚡</button>
+
+<script>
+// EV DATA — loaded inline (scraped from evdb.nz)
+const EV_DATA = EV_DATA_PLACEHOLDER;
+
+// --- State ---
+let filters = getDefaultFilters();
+let chipSelections = { make: new Set(), shape: new Set(), drivetrain: new Set(), chem: new Set(), seats: new Set(), year: new Set() };
+
+function getDefaultFilters() {
+  return {
+    search: '',
+    priceMin: 0, priceMax: 750000,
+    rangeMin: 0,
+    powerMin: 0,
+    batteryMin: 0,
+    dcMin: 0,
+    speedMax: 20,
+    effMax: 350,
+    bootMin: 0,
+    towMin: 0, towRequired: false,
+    acMin: 0,
+    weightMax: 3100,
+    groundMin: 0,
+    topspeedMin: 0,
+    torqueMin: 0,
+    v2lRequired: false,
+    frunkRequired: false,
+    lengthMin: 0, lengthMax: 6000,
+    widthMax: 2200,
+    heightMax: 2600,
+    sortBy: 'price-asc',
+  };
+}
+
+// --- Helpers ---
+function fmt(n) {
+  if (n == null) return '—';
+  if (n >= 1000) return '$' + (n/1000).toFixed(n % 1000 === 0 ? 0 : 0) + 'k';
+  return n.toString();
+}
+function fmtPrice(n) {
+  if (n == null) return '—';
+  return '$' + n.toLocaleString('en-NZ', { maximumFractionDigits: 0 });
+}
+
+// --- Build chip filters ---
+function buildChips(containerId, values, key) {
+  const container = document.getElementById(containerId);
+  const sorted = [...values].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+  container.innerHTML = sorted.map(v =>
+    `<span class="chip" data-key="${key}" data-value="${v}">${v}</span>`
+  ).join('');
+  container.addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const val = chip.dataset.value;
+    const set = chipSelections[key];
+    if (set.has(val)) { set.delete(val); chip.classList.remove('active'); }
+    else { set.add(val); chip.classList.add('active'); }
+    applyFilters();
+  });
+}
+
+// --- Init chips ---
+function initChips() {
+  const makes = new Set(), shapes = new Set(), drives = new Set(), chems = new Set(), seats = new Set(), years = new Set();
+  EV_DATA.forEach(ev => {
+    if (ev.make_name) makes.add(ev.make_name);
+    if (ev.shape) shapes.add(ev.shape);
+    if (ev.drivetrain) drives.add(ev.drivetrain);
+    if (ev.chem) chems.add(ev.chem);
+    if (ev.seats) seats.add(String(ev.seats));
+    if (ev.year) years.add(ev.year);
+  });
+  buildChips('makeFilter', makes, 'make');
+  buildChips('shapeFilter', shapes, 'shape');
+  buildChips('driveFilter', drives, 'drivetrain');
+  buildChips('chemFilter', chems, 'chem');
+  buildChips('seatsFilter', seats, 'seats');
+  buildChips('yearFilter', years, 'year');
+}
+
+// --- Collapsible sections ---
+function initCollapsible() {
+  document.querySelectorAll('.filter-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.classList.toggle('collapsed');
+      header.nextElementSibling.classList.toggle('hidden');
+    });
+  });
+}
+
+// --- Toggles ---
+function initToggles() {
+  ['towRequired', 'v2lRequired', 'frunkRequired'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function() {
+      this.classList.toggle('active');
+      filters[id] = this.classList.contains('active');
+      applyFilters();
+    });
+  });
+}
+
+// --- Range sliders ---
+function initSliders() {
+  const sliders = [
+    { id: 'priceMin', label: 'priceMinVal', fmt: v => fmtPrice(+v), key: 'priceMin' },
+    { id: 'priceMax', label: 'priceMaxVal', fmt: v => fmtPrice(+v), key: 'priceMax' },
+    { id: 'rangeMin', label: 'rangeMinVal', fmt: v => v + ' km', key: 'rangeMin' },
+    { id: 'powerMin', label: 'powerMinVal', fmt: v => v + ' kW', key: 'powerMin' },
+    { id: 'batteryMin', label: 'batteryMinVal', fmt: v => v + ' kWh', key: 'batteryMin' },
+    { id: 'dcMin', label: 'dcMinVal', fmt: v => v + ' kW', key: 'dcMin' },
+    { id: 'speedMax', label: 'speedMaxVal', fmt: v => v + ' s', key: 'speedMax' },
+    { id: 'effMax', label: 'effMaxVal', fmt: v => v + ' Wh/km', key: 'effMax' },
+    { id: 'bootMin', label: 'bootMinVal', fmt: v => v + ' L', key: 'bootMin' },
+    { id: 'towMin', label: 'towMinVal', fmt: v => v + ' kg', key: 'towMin' },
+    { id: 'acMin', label: 'acMinVal', fmt: v => v + ' kW', key: 'acMin' },
+    { id: 'weightMax', label: 'weightMaxVal', fmt: v => v + ' kg', key: 'weightMax' },
+    { id: 'groundMin', label: 'groundMinVal', fmt: v => v + ' mm', key: 'groundMin' },
+    { id: 'topspeedMin', label: 'topspeedMinVal', fmt: v => v + ' km/h', key: 'topspeedMin' },
+    { id: 'torqueMin', label: 'torqueMinVal', fmt: v => v + ' Nm', key: 'torqueMin' },
+    { id: 'lengthMin', label: 'lengthMinVal', fmt: v => v + ' mm', key: 'lengthMin' },
+    { id: 'lengthMax', label: 'lengthMaxVal', fmt: v => v + ' mm', key: 'lengthMax' },
+    { id: 'widthMax', label: 'widthMaxVal', fmt: v => v + ' mm', key: 'widthMax' },
+    { id: 'heightMax', label: 'heightMaxVal', fmt: v => v + ' mm', key: 'heightMax' },
+  ];
+  sliders.forEach(s => {
+    const el = document.getElementById(s.id);
+    const lbl = document.getElementById(s.label);
+    el.addEventListener('input', () => {
+      lbl.textContent = s.fmt(el.value);
+      filters[s.key] = +el.value;
+      applyFilters();
+    });
+  });
+}
+
+// --- Search ---
+function initSearch() {
+  document.getElementById('search').addEventListener('input', e => {
+    filters.search = e.target.value.toLowerCase();
+    applyFilters();
+  });
+}
+
+// --- Sort ---
+function initSort() {
+  document.getElementById('sortBy').addEventListener('change', e => {
+    filters.sortBy = e.target.value;
+    applyFilters();
+  });
+}
+
+// --- Reset ---
+function initReset() {
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    filters = getDefaultFilters();
+    chipSelections = { make: new Set(), shape: new Set(), drivetrain: new Set(), chem: new Set(), seats: new Set(), year: new Set() };
+    // Reset UI
+    document.getElementById('search').value = '';
+    document.getElementById('sortBy').value = 'price-asc';
+    document.querySelectorAll('.chip.active').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.toggle.active').forEach(t => t.classList.remove('active'));
+    // Reset sliders
+    const defaults = {
+      priceMin: 0, priceMax: 750000, rangeMin: 0, powerMin: 0, batteryMin: 0,
+      dcMin: 0, speedMax: 20, effMax: 350, bootMin: 0, towMin: 0, acMin: 0,
+      weightMax: 3100, groundMin: 0, lengthMin: 0, lengthMax: 6000,
+      widthMax: 2200, heightMax: 2600, topspeedMin: 0, torqueMin: 0
+    };
+    Object.entries(defaults).forEach(([k, v]) => {
+      const el = document.getElementById(k);
+      if (el) el.value = v;
+    });
+    // Reset labels
+    document.querySelectorAll('.range-labels .val').forEach(el => {
+      const slider = el.closest('.range-filter')?.querySelector('input[type="range"]') ||
+                     el.closest('.filter-body')?.querySelector('input[type="range"]');
+    });
+    // Trigger re-render with fresh label values
+    document.querySelectorAll('input[type="range"]').forEach(el => el.dispatchEvent(new Event('input')));
+    applyFilters();
+  });
+}
+
+// --- Filter logic ---
+function matchesFilters(ev) {
+  const f = filters;
+  // Search
+  if (f.search) {
+    const hay = `${ev.name} ${ev.make_name} ${ev.model_name} ${ev.shape} ${ev.drivetrain}`.toLowerCase();
+    if (!hay.includes(f.search)) return false;
+  }
+  // Price
+  if (ev.price < f.priceMin || ev.price > f.priceMax) return false;
+  // Range
+  if (ev.range != null && ev.range < f.rangeMin) return false;
+  if (f.rangeMin > 0 && ev.range == null) return false;
+  // Power
+  if (f.powerMin > 0 && (ev.power == null || ev.power < f.powerMin)) return false;
+  // Battery
+  if (f.batteryMin > 0 && (ev.battery == null || ev.battery < f.batteryMin)) return false;
+  // DC Charging
+  if (f.dcMin > 0 && (ev.dccharger == null || ev.dccharger < f.dcMin)) return false;
+  // 0-100
+  if (f.speedMax < 20 && (ev.speed == null || ev.speed > f.speedMax)) return false;
+  // Efficiency
+  if (f.effMax < 350 && (ev.efficiency == null || ev.efficiency > f.effMax)) return false;
+  // Boot
+  if (f.bootMin > 0 && (ev.boot == null || ev.boot < f.bootMin)) return false;
+  // Tow
+  if (f.towRequired && (ev.tow_brake == null || ev.tow_brake === 0)) return false;
+  if (f.towMin > 0 && (ev.tow_brake == null || ev.tow_brake < f.towMin)) return false;
+  // AC Charger
+  if (f.acMin > 0 && (ev.charger == null || ev.charger < f.acMin)) return false;
+  // Weight
+  if (f.weightMax < 3100 && (ev.weight == null || ev.weight > f.weightMax)) return false;
+  // Ground clearance
+  if (f.groundMin > 0 && (ev.ground == null || ev.ground < f.groundMin)) return false;
+  // Length
+  if (f.lengthMin > 0 && (ev.lengthmm == null || ev.lengthmm < f.lengthMin)) return false;
+  if (f.lengthMax < 6000 && (ev.lengthmm == null || ev.lengthmm > f.lengthMax)) return false;
+  // Width
+  if (f.widthMax < 2200 && (ev.width == null || ev.width > f.widthMax)) return false;
+  // Height
+  if (f.heightMax < 2600 && (ev.height == null || ev.height > f.heightMax)) return false;
+  // Top speed
+  if (f.topspeedMin > 0 && (ev.topspeed == null || ev.topspeed < f.topspeedMin)) return false;
+  // Torque
+  if (f.torqueMin > 0 && (ev.torque == null || ev.torque < f.torqueMin)) return false;
+  // V2L
+  if (f.v2lRequired && !ev.v2l) return false;
+  // Frunk
+  if (f.frunkRequired && (ev.frunk == null || ev.frunk === 0)) return false;
+  // Chip selections
+  if (chipSelections.make.size > 0 && !chipSelections.make.has(ev.make_name)) return false;
+  if (chipSelections.shape.size > 0 && !chipSelections.shape.has(ev.shape)) return false;
+  if (chipSelections.drivetrain.size > 0 && !chipSelections.drivetrain.has(ev.drivetrain)) return false;
+  if (chipSelections.chem.size > 0 && !chipSelections.chem.has(ev.chem)) return false;
+  if (chipSelections.seats.size > 0 && !chipSelections.seats.has(String(ev.seats))) return false;
+  if (chipSelections.year.size > 0 && !chipSelections.year.has(ev.year)) return false;
+
+  return true;
+}
+
+function sortEVs(evs) {
+  const [field, dir] = filters.sortBy.split('-');
+  const mult = dir === 'asc' ? 1 : -1;
+  return [...evs].sort((a, b) => {
+    let va = a[field], vb = b[field];
+    if (field === 'name') return mult * String(va || '').localeCompare(String(vb || ''));
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    return mult * (va - vb);
+  });
+}
+
+// --- Render ---
+function renderCard(ev) {
+  const imgHtml = ev.image_url
+    ? `<img class="ev-card-img" src="${ev.image_url}" alt="${ev.name}" loading="lazy" onerror="this.outerHTML='<div class=\\'ev-card-img placeholder\\'>⚡</div>'">`
+    : `<div class="ev-card-img placeholder">⚡</div>`;
+
+  const tags = [];
+  if (ev.drivetrain) tags.push(ev.drivetrain);
+  if (ev.shape) tags.push(ev.shape);
+  if (ev.chem) tags.push(ev.chem);
+  if (ev.v2l) tags.push('V2L ' + ev.v2l + 'kW');
+  if (ev.frunk) tags.push('Frunk ' + ev.frunk + 'L');
+
+  return `
+    <a class="ev-card" href="${ev.url || '#'}" target="_blank" rel="noopener">
+      ${imgHtml}
+      <div class="ev-card-body">
+        <div>
+          <div class="ev-card-title">${ev.name}</div>
+          <div class="ev-card-subtitle">${ev.make_name} ${ev.model_name} · ${ev.year}</div>
+        </div>
+        <div class="ev-card-price">${fmtPrice(ev.price)}</div>
+        <div class="ev-card-specs">
+          <div class="spec-item"><span class="spec-label">Range</span><span class="spec-value">${ev.range ? ev.range + ' km' : '—'}</span></div>
+          <div class="spec-item"><span class="spec-label">Power</span><span class="spec-value">${ev.power ? ev.power + ' kW' : '—'}</span></div>
+          <div class="spec-item"><span class="spec-label">Battery</span><span class="spec-value">${ev.battery ? ev.battery + ' kWh' : '—'}</span></div>
+          <div class="spec-item"><span class="spec-label">DC Charge</span><span class="spec-value">${ev.dccharger ? ev.dccharger + ' kW' : '—'}</span></div>
+          <div class="spec-item"><span class="spec-label">0-100</span><span class="spec-value">${ev.speed ? ev.speed + ' s' : '—'}</span></div>
+          <div class="spec-item"><span class="spec-label">Efficiency</span><span class="spec-value">${ev.efficiency ? ev.efficiency + ' Wh/km' : '—'}</span></div>
+          <div class="spec-item"><span class="spec-label">Seats</span><span class="spec-value">${ev.seats || '—'}</span></div>
+          <div class="spec-item"><span class="spec-label">Boot</span><span class="spec-value">${ev.boot ? ev.boot + ' L' : '—'}</span></div>
+          ${ev.tow_brake ? `<div class="spec-item"><span class="spec-label">Tow (braked)</span><span class="spec-value">${ev.tow_brake} kg</span></div>` : ''}
+          ${ev.weight ? `<div class="spec-item"><span class="spec-label">Weight</span><span class="spec-value">${ev.weight} kg</span></div>` : ''}
+        </div>
+        <div class="ev-card-tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+    </a>`;
+}
+
+function applyFilters() {
+  const filtered = EV_DATA.filter(matchesFilters);
+  const sorted = sortEVs(filtered);
+
+  document.getElementById('count').textContent = sorted.length;
+  const grid = document.getElementById('evGrid');
+
+  if (sorted.length === 0) {
+    grid.innerHTML = '<div class="no-results">No EVs match your filters. Try adjusting or resetting.</div>';
+  } else {
+    grid.innerHTML = sorted.map(renderCard).join('');
+  }
+}
+
+// --- Sidebar toggle (mobile) ---
+function initSidebarToggle() {
+  const btn = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('sidebar');
+  btn.addEventListener('click', () => sidebar.classList.toggle('open'));
+  // Close sidebar on outside click
+  document.querySelector('.main').addEventListener('click', () => sidebar.classList.remove('open'));
+}
+
+// --- Init ---
+document.getElementById('total').textContent = EV_DATA.length;
+initChips();
+initCollapsible();
+initToggles();
+initSliders();
+initSearch();
+initSort();
+initReset();
+initSidebarToggle();
+applyFilters();
+</script>
+</body>
+</html>
