@@ -1,0 +1,30 @@
+---
+// No props — grid is populated client-side by the filter script
+---
+
+<main class="main">
+  <div class="ev-grid" id="evGrid"></div>
+</main>
+
+<style>
+  .main {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .ev-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .ev-grid {
+      grid-template-columns: 1fr;
+    }
+    .main {
+      padding: 12px;
+    }
+  }
+</style>

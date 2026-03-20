@@ -1,0 +1,49 @@
+---
+interface Props {
+  totalCount: number;
+}
+const { totalCount } = Astro.props;
+---
+
+<div class="header">
+  <h1><span>NZ</span> EV Finder</h1>
+  <div class="header-stats">
+    <span>Showing <strong id="count">0</strong> of <strong id="total">{totalCount}</strong> EVs</span>
+    <span>|</span>
+    <span>Data from <a href="https://evdb.nz/evs" target="_blank" style="color:var(--accent)">evdb.nz</a></span>
+  </div>
+</div>
+
+<style>
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .header h1 span {
+    color: var(--accent);
+  }
+  .header-stats {
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .header-stats strong {
+    color: var(--accent);
+    font-size: 15px;
+  }
+</style>
