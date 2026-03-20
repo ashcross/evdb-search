@@ -1,43 +1,46 @@
-# Astro Starter Kit: Minimal
+# NZ EV Finder
 
-```sh
-npm create astro@latest -- --template minimal
-```
-
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+A searchable database of electric vehicles available in New Zealand, built with Astro, Tailwind CSS, and Alpine.js. This is built from the source data on evdb.co.nz and is acting as an advanced search page, then directing the user to the actual ev page on evdb.co.nz
 
 ## 🚀 Project Structure
 
-Inside of your Astro project, you'll see the following folders and files:
-
 ```text
 /
-├── public/
+├── public/                # Static assets
 ├── src/
-│   └── pages/
-│       └── index.astro
+│   ├── components/        # Reusable Astro components
+│   ├── data/              # EV database and data
+│   ├── layouts/           # Page layouts
+│   ├── pages/             # Route pages
+│   └── styles/            # Global styles
 └── package.json
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## ⚡ Features
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
+- Search and filter electric vehicles by model, brand, price, range, and other specifications
+- Responsive design optimized for desktop and mobile
+- Fast filtering with Alpine.js
+- Built with modern web technologies (Astro 6, Tailwind CSS 4, Alpine.js)
 
 ## 🧞 Commands
 
-All commands are run from the root of the project, from a terminal:
+All commands are run from the root of the project:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+| Command           | Action                                      |
+| :---------------- | :------------------------------------------ |
+| `npm install`     | Installs dependencies                       |
+| `npm run dev`     | Starts local dev server at `localhost:4321` |
+| `npm run build`   | Build your production site to `./dist/`     |
+| `npm run preview` | Preview your build locally                  |
 
-## 👀 Want to learn more?
+## 🛠️ Tech Stack
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- **Astro 6** - Static site generator and component framework
+- **Tailwind CSS 4** - Utility-first CSS framework
+- **Alpine.js** - Lightweight JavaScript for interactivity
+- **Wrangler** - Cloudflare Workers CLI for deployment
+
+## 📝 License
+
+This project is licensed under the MIT License.
